@@ -1,6 +1,6 @@
 # Importer les données à partir du fichier CSV
 # Modification de l'encoding du fichier ANSI -> utf-8
-donnees <- read.csv("Pays_donnees.csv", header = TRUE, sep = ",")
+donnees <- read.csv("data/Pays_donnees.csv", header = TRUE, sep = ",")
 # Supprimer les valeurs manquantes
 donnees <- na.omit(donnees)
 # Normaliser les variables si nécessaire
