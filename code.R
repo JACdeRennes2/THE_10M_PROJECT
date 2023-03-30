@@ -34,3 +34,18 @@ recommandations[[1]] <- c("Améliorer la santé maternelle et infantile", "Inves
 recommandations[[2]] <- c("Stimuler la croissance économique", "Promouvoir l'entrepreneuriat", "Encourager l'investissement étranger")
 recommandations[[3]] <- c("Lutter contre la pauvreté", "Améliorer l'accès aux soins de santé", "Investir dans l'agriculture")
 recommandations
+
+
+# Comment répartir les 10 M?
+
+# Calcul des besoins moyens par cluster
+besoins_cluster <- aggregate(donnees[,2:9], by = list(donnees$cluster), FUN = mean)
+# Ajout de la colonne "besoins" pour chaque pays
+donnees$besoins <- NA
+for(i in 1:nrow(donnees)) {
+  donnees[i,"besoins"] <- besoins_cluster[donnees[i,"cluster"], names(besoins_cluster) %in% names(donnees)[2:9]]
+}
+# Répartition des fonds
+donnees$montant_alloue <- donnees$besoins / sum(donnees$besoins) * 10000000
+
+
