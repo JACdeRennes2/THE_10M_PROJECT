@@ -15,9 +15,13 @@ pairs(donnees_norm, main="Matrice de corrélation")
 pca <- prcomp(donnees_norm, scale = TRUE)
 summary(pca)
 
+eucl <- dist(donnees_norm)^2
+plot(hclust(eucl, method="ward.D2"))
+plot(rev(hclust(eucl, method="ward.D2")$height), type='b')
+
 # K-means clustering avec 3 clusters
 set.seed(123)
-kmeans_clusters <- kmeans(pca$x[,1:3], centers = 3, nstart = 25)
+kmeans_clusters <- kmeans(pca$x[,1:3], centers = 4, nstart = 25)
 table(kmeans_clusters$cluster)
 
 # Ajouter les clusters aux données d'origine
@@ -25,7 +29,7 @@ donnees$cluster <- as.factor(kmeans_clusters$cluster)
 # Identifier les pays avec les plus grands besoins dans chaque cluster
 besoins <- aggregate(donnees[,2:9], by = list(donnees$cluster), FUN = mean)
 besoins <- besoins[,2:9]
-rownames(besoins) <- c("Cluster 1", "Cluster 2", "Cluster 3")
+rownames(besoins) <- c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4")
 besoins
 
 # Recommandations pour chaque cluster
