@@ -1,3 +1,10 @@
+library(sf)
+#install.packages("countrycode")
+library(countrycode)
+library(ggmap)
+library("RColorBrewer")
+library("classInt")
+
 # Importer les données à partir du fichier CSV
 # Modification de l'encoding du fichier ANSI -> utf-8
 donnees <- read.csv("data/Pays_donnees.csv", header = TRUE, sep = ",", encoding = "UTF-8")
@@ -5,6 +12,7 @@ donnees <- read.csv("data/Pays_donnees.csv", header = TRUE, sep = ",", encoding 
 donnees <- na.omit(donnees)
 # Normaliser les variables si nécessaire
 donnees_norm <- scale(donnees[2:9])
+
 
 # Statistiques descriptives
 summary(donnees_norm)
@@ -53,3 +61,45 @@ for(i in 1:nrow(donnees)) {
 donnees$montant_alloue <- donnees$besoins / sum(donnees$besoins) * 10000000
 
 
+################################################################################
+################################################################################
+## Partie polygones ############################################################
+################################################################################
+
+countries_code <- countrycode(donnees$pays, origin = 'country.name', destination = 'iso3c')
+
+world_polygons <- st_read("data/world-administrative-boundaries.shp")
+countries_polygons <- world_polygons[which(world_polygons$iso3 %in% countries_code), c(1, 4, 9)]
+countries_polygons <- countries_polygons[order(countries_polygons$name),]
+countries_polygons <- countries_polygons[-c(11, 45, 125, 129, 149, 160, 156),]
+pays_carte <- donnees$pays[-c(39, 93, 139, 142, 148, 159)]
+montants <- donnees$montant_alloue[-c(39, 93, 139, 142, 148, 159)]
+countries_polygons$pays <- pays_carte
+countries_polygons$montant_alloue <- round(montants)
+
+
+plot(countries_polygons$geometry,
+     main="Repartition des dépenses")
+
+palette_couleurs <- brewer.pal(4, "YlOrRd")
+couleurs <- ifelse(countries_polygons$montant_alloue == 6467, palette_couleurs[1],
+                   ifelse(countries_polygons$montant_alloue == 13416, palette_couleurs[2],
+                          ifelse(countries_polygons$montant_alloue == 45238, palette_couleurs[3],
+                                 palette_couleurs[4])))
+
+plot(countries_polygons["montant_alloue"], 
+     main="Taux de chomage dans l'agglomération Rennaise",
+     col=couleurs,
+     graticule = st_crs(4326)
+)
+legend("bottomleft",
+       legend = formatC(classes$brks),
+       fill = palette_couleurs,
+       title = "Montant alloué",
+       title.col = "black",
+       cex = 0.6,
+       bty = "n",
+       horiz = FALSE)
+
+################################################################################
+################################################################################
