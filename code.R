@@ -78,28 +78,41 @@ countries_polygons$pays <- pays_carte
 countries_polygons$montant_alloue <- round(montants)
 
 
+
+
 plot(countries_polygons$geometry,
      main="Repartition des dépenses")
 
-palette_couleurs <- brewer.pal(4, "YlOrRd")
+# Déterminer les classes
+nb_classes <- 4
+classes <- classIntervals(donnees$montant_alloue, nb_classes, style = "kmeans")
+
+# Utiliser les couleurs de RColorBrewer
+palette_couleurs <- brewer.pal(nb_classes, "YlOrRd")
 couleurs <- ifelse(countries_polygons$montant_alloue == 6467, palette_couleurs[1],
                    ifelse(countries_polygons$montant_alloue == 13416, palette_couleurs[2],
                           ifelse(countries_polygons$montant_alloue == 45238, palette_couleurs[3],
                                  palette_couleurs[4])))
 
+# Dessiner la carte avec les couleurs de chaque pays
 plot(countries_polygons["montant_alloue"], 
-     main="Taux de chomage dans l'agglomération Rennaise",
+     main="Carte du monde de la répartition du budget",
      col=couleurs,
      graticule = st_crs(4326)
 )
-legend("bottomleft",
+
+
+legend("topright",
        legend = formatC(classes$brks),
        fill = palette_couleurs,
        title = "Montant alloué",
        title.col = "black",
        cex = 0.6,
        bty = "n",
-       horiz = FALSE)
+       horiz = FALSE,
+       box.lwd = 1,
+       box.col = "black",
+       bg = "white")
 
 ################################################################################
 ################################################################################
