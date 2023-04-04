@@ -84,11 +84,11 @@ plot(countries_polygons$geometry,
      main="Repartition des dépenses")
 
 # Déterminer les classes
-nb_classes <- 4
-classes <- classIntervals(donnees$montant_alloue, nb_classes, style = "kmeans")
+nb_coupures <- 3
+classes <- classIntervals(donnees$montant_alloue, nb_coupures, style = "kmeans")
 
 # Utiliser les couleurs de RColorBrewer
-palette_couleurs <- brewer.pal(nb_classes, "YlOrRd")
+palette_couleurs <- brewer.pal(4, "YlOrRd")
 couleurs <- ifelse(countries_polygons$montant_alloue == 6467, palette_couleurs[1],
                    ifelse(countries_polygons$montant_alloue == 13416, palette_couleurs[2],
                           ifelse(countries_polygons$montant_alloue == 45238, palette_couleurs[3],
