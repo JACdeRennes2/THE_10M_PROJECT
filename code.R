@@ -27,6 +27,7 @@ eucl <- dist(donnees_norm)^2
 plot(hclust(eucl, method="ward.D2"))
 plot(rev(hclust(eucl, method="ward.D2")$height), type='b')
 
+
 # K-means clustering avec 3 clusters
 set.seed(123)
 kmeans_clusters <- kmeans(pca$x[,1:3], centers = 4, nstart = 25)
@@ -114,5 +115,19 @@ legend("topright",
        box.col = "black",
        bg = "white")
 
+
+#Graphique avec un ggplot
+library(ggplot2)
+
+# Convertir la dataframe en sf
+countries_sf <- st_as_sf(countries_polygons)
+
+# Dessiner la carte avec les couleurs de chaque pays et les étiquettes
+ggplot() + 
+  geom_sf(data = countries_sf, aes(fill = montant_alloue)) +
+  scale_fill_gradient(low = "yellow", high = "red", name = "Montant alloué €") +
+  geom_sf_text(data = countries_sf, aes(label = paste(pays)), size = 2, color = "black", check_overlap = TRUE, nudge_y = 0.5) +
+  labs(title = "Carte du monde de la répartition du budget") +
+  theme_minimal()+ theme(plot.title = element_text(size = 20, hjust = 0.5))
 ################################################################################
 ################################################################################
