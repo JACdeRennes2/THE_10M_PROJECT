@@ -44,7 +44,7 @@ plot(rev(hclust(eucl, method = "ward.D2")$height), type = 'b')
 
 # K-means clustering avec 4 clusters
 set.seed(123)
-kmeans_clusters <- kmeans(pca$x[, 1:2], centers = 4, nstart = 25)
+kmeans_clusters <- kmeans(pca$x[, 1:2], centers = 4)
 table(kmeans_clusters$cluster)
 
 # Ajouter les clusters aux données d'origine
