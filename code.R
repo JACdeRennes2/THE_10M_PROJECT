@@ -4,6 +4,7 @@ library(countrycode)
 library(ggmap)
 library("RColorBrewer")
 library("classInt")
+library(mclust)
 
 # Importer les données à partir du fichier CSV
 # Modification de l'encoding du fichier ANSI -> utf-8
@@ -16,17 +17,17 @@ donnees <-
   )
 # Supprimer les valeurs manquantes
 donnees <- na.omit(donnees)
-
-
-# Statistiques descriptives
-summary(donnees_norm)
-# Graphiques
-pairs(donnees_norm, main = "Matrice de corrélation")
-
 # Sélection des variables quantitatives
 donnees_quant <- donnees[, c(2:10)]
 # Centrer et réduire les données
 donnees_centrees <- scale(donnees_quant, center = TRUE, scale = TRUE)
+
+
+# Statistiques descriptives
+summary(donnees_centrees)
+# Graphiques
+pairs(donnees_centrees, main = "Matrice de corrélation")
+
 # Appliquer l'ACP
 pca <- prcomp(donnees_centrees, scale. = TRUE)
 # Visualiser le graphique des valeurs propres
@@ -37,17 +38,19 @@ summary(pca)
 print(pca$rotation[,1:2])
 
 
-eucl <- dist(donnees_norm) ^ 2
+eucl <- dist(donnees_centrees) ^ 2
 plot(hclust(eucl, method = "ward.D2"))
 plot(rev(hclust(eucl, method = "ward.D2")$height), type = 'b')
 
 
-model <- Mclust(donnees_norm)
+model <- Mclust(donnees_centrees)
 plot(model, what = "BIC")
 
 # Get the number of clusters with the lowest BIC value
 best_cluster <- which.min(model$BIC)
 cat("The optimal number of clusters is:", best_cluster)
+
+
 
 # K-means clustering avec 4 clusters
 set.seed(123)
