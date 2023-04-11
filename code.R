@@ -42,6 +42,13 @@ plot(hclust(eucl, method = "ward.D2"))
 plot(rev(hclust(eucl, method = "ward.D2")$height), type = 'b')
 
 
+model <- Mclust(donnees_norm)
+plot(model, what = "BIC")
+
+# Get the number of clusters with the lowest BIC value
+best_cluster <- which.min(model$BIC)
+cat("The optimal number of clusters is:", best_cluster)
+
 # K-means clustering avec 4 clusters
 set.seed(123)
 kmeans_clusters <- kmeans(pca$x[, 1:2], centers = 4)
@@ -100,21 +107,14 @@ classes <-
   classIntervals(donnees$montant_alloue, nb_coupures, style = "kmeans")
 
 # Utiliser les couleurs de RColorBrewer
-palette_couleurs <- brewer.pal(4, "YlOrRd")
-couleurs <-
-  ifelse(
-    countries_polygons$montant_alloue == 6467,
-    palette_couleurs[1],
-    ifelse(
-      countries_polygons$montant_alloue == 13416,
-      palette_couleurs[2],
-      ifelse(
-        countries_polygons$montant_alloue == 45238,
-        palette_couleurs[3],
-        palette_couleurs[4]
-      )
-    )
-  )
+palette_couleurs <- brewer.pal(best_cluster, "YlOrRd")
+couleurs <- rep(NA, length(countries_polygons$montant_alloue))
+
+for (i in seq_along(countries_polygons$montant_alloue)) {
+  montant_alloue <- countries_polygons$montant_alloue[i]
+  couleurs[i] <- palette_couleurs[match(montant_alloue, unique(countries_polygons$montant_alloue))]
+}
+
 
 # Dessiner la carte avec les couleurs de chaque pays
 plot(
@@ -149,8 +149,9 @@ countries_sf <- st_as_sf(countries_polygons)
 # Dessiner la carte avec les couleurs de chaque pays et les étiquettes
 ggplot() +
   geom_sf(data = countries_sf, aes(fill = montant_alloue)) +
-  scale_fill_gradient(low = "yellow",
+  scale_fill_gradient(low = "#FFFF54",
                       high = "red",
+                      na.value = "grey50",
                       name = "Montant alloué €") +
   geom_sf_text(
     data = countries_sf,
