@@ -55,12 +55,12 @@ donnees$cluster <- as.factor(kmeans_clusters$cluster)
 
 # Calcul des besoins moyens par cluster
 besoins_cluster <-
-  aggregate(donnees[, 2:9], by = list(donnees$cluster), FUN = mean)
+  aggregate(donnees[, 2:10], by = list(donnees$cluster), FUN = mean)
 # Ajout de la colonne "besoins" pour chaque pays
 donnees$besoins <- NA
 for (i in 1:nrow(donnees)) {
   donnees[i, "besoins"] <-
-    besoins_cluster[donnees[i, "cluster"], names(besoins_cluster) %in% names(donnees)[2:9]]
+    besoins_cluster[donnees[i, "cluster"], names(besoins_cluster) %in% names(donnees)[2:10]]
 }
 # Répartition des fonds
 donnees$montant_alloue <-
