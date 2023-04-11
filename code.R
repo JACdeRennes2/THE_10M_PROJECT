@@ -16,8 +16,6 @@ donnees <-
   )
 # Supprimer les valeurs manquantes
 donnees <- na.omit(donnees)
-# Normaliser les variables si nécessaire
-donnees_norm <- scale(donnees[2:9])
 
 
 # Statistiques descriptives
@@ -25,18 +23,28 @@ summary(donnees_norm)
 # Graphiques
 pairs(donnees_norm, main = "Matrice de corrélation")
 
-# Analyse en composantes principales (ACP)
-pca <- prcomp(donnees_norm, scale = TRUE)
+# Sélection des variables quantitatives
+donnees_quant <- donnees[, c(2:10)]
+# Centrer et réduire les données
+donnees_centrees <- scale(donnees_quant, center = TRUE, scale = TRUE)
+# Appliquer l'ACP
+pca <- prcomp(donnees_centrees, scale. = TRUE)
+# Visualiser le graphique des valeurs propres
+plot(pca)
+# Interpréter les composantes principales
 summary(pca)
+# Afficher les charges des variables sur les deux premiers axes
+print(pca$rotation[,1:2])
+
 
 eucl <- dist(donnees_norm) ^ 2
 plot(hclust(eucl, method = "ward.D2"))
 plot(rev(hclust(eucl, method = "ward.D2")$height), type = 'b')
 
 
-# K-means clustering avec 3 clusters
+# K-means clustering avec 4 clusters
 set.seed(123)
-kmeans_clusters <- kmeans(pca$x[, 1:3], centers = 4, nstart = 25)
+kmeans_clusters <- kmeans(pca$x[, 1:2], centers = 4, nstart = 25)
 table(kmeans_clusters$cluster)
 
 # Ajouter les clusters aux données d'origine
