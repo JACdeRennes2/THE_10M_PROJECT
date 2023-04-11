@@ -99,8 +99,6 @@ countries_polygons$pays <- pays_carte
 countries_polygons$montant_alloue <- round(montants)
 
 
-
-
 plot(countries_polygons$geometry,
      main = "Repartition des dépenses")
 
@@ -163,8 +161,9 @@ ggplot() +
     color = "black",
     check_overlap = TRUE,
     nudge_y = 0.5
-  ) +
+  )+
   labs(title = "Carte du monde de la répartition du budget") +
-  theme_minimal() + theme(plot.title = element_text(size = 20, hjust = 0.5))
+  theme_minimal() + 
+  theme(plot.title = element_text(size = 20, hjust = 0.5))
 ################################################################################
 ################################################################################
