@@ -5,7 +5,8 @@ library(ggmap)
 library("RColorBrewer")
 library("classInt")
 library(mclust)
-
+library(gridExtra)
+library(FactoMineR)
 # Importer les données à partir du fichier CSV
 # Modification de l'encoding du fichier ANSI -> utf-8
 donnees <-
@@ -17,6 +18,26 @@ donnees <-
   )
 # Supprimer les valeurs manquantes
 donnees <- na.omit(donnees)
+
+#représentation illustrative
+
+# Création du graphique à boîtes
+
+plot1 <- ggplot(donnees, aes(x = "", y = inflation)) +
+  geom_boxplot(fill = "#1C3EC7", color = "black") +
+  ggtitle("Inflation par pays") +
+  ylab("Inflation") +
+  theme_bw()+theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
+
+plot2 <- ggplot(donnees, aes(x = "", y = pib_h)) +
+  geom_boxplot(fill = "#BD1818DA", color = "black") +
+  ggtitle("PIB par habitant par pays") +
+  ylab("PIB par habitant") +
+  theme_bw()+theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
+
+grid.arrange(plot1, plot2, ncol = 2)
+dev.off()
+
 # Sélection des variables quantitatives
 donnees_quant <- donnees[, c(2:10)]
 # Centrer et réduire les données
@@ -30,6 +51,9 @@ pairs(donnees_centrees, main = "Matrice de corrélation")
 
 # Appliquer l'ACP
 pca <- prcomp(donnees_centrees, scale. = TRUE)
+acp = PCA(donnees_norm)
+PC1 <-pca$x[, 1]
+PC2 <- pca$x[, 2]
 # Visualiser le graphique des valeurs propres
 plot(pca)
 # Interpréter les composantes principales
@@ -37,10 +61,18 @@ summary(pca)
 # Afficher les charges des variables sur les deux premiers axes
 print(pca$rotation[,1:2])
 
-
+par(mfrow = c(1,2)) 
 eucl <- dist(donnees_centrees) ^ 2
-plot(hclust(eucl, method = "ward.D2"))
-plot(rev(hclust(eucl, method = "ward.D2")$height), type = 'b')
+dend <- hclust(eucl, method = "ward.D2")
+# Plot le dendrogramme avec les titres
+plot(dend, main = "Dendrogramme hiérarchique",
+     sub = "Méthode de Ward", xlab = "Observations", ylab = "Distance")
+
+
+plot(rev(hclust(eucl, method = "ward.D2")$height), type = 'b',
+     main = "Graphique de coupe du dendrogramme",
+     xlab = "Nombre de groupes",
+     ylab = "Hauteur du saut")
 
 
 model <- Mclust(donnees_centrees)
@@ -60,6 +92,16 @@ table(kmeans_clusters$cluster)
 # Ajouter les clusters aux données d'origine
 donnees$cluster <- as.factor(kmeans_clusters$cluster)
 
+# Ajouter les clusters aux données d'origine
+donnees$cluster <- as.factor(kmeans_clusters$cluster)
+
+# Créer un graphique en nuage de points coloré par cluster
+ggplot(donnees, aes(x = PC1, y = PC2, color = cluster)) +
+  geom_point() +
+  labs(title = "ACP avec clustering K-means (4 clusters)",
+       x = "Première composante principale",
+       y = "Deuxième composante principale")+
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))+theme_minimal()
 
 # Comment répartir les 10 M?
 
@@ -152,6 +194,7 @@ ggplot() +
   geom_sf(data = countries_sf, aes(fill = montant_alloue)) +
   scale_fill_gradient(low = "#FFFF54",
                       high = "red",
+                      limits = c(0, max(donnees$montant_alloue)),
                       na.value = "grey50",
                       name = "Montant alloué €") +
   geom_sf_text(
@@ -167,3 +210,97 @@ ggplot() +
   theme(plot.title = element_text(size = 20, hjust = 0.5))
 ################################################################################
 ################################################################################
+
+
+# Deuxième classification 
+
+donnees_cluster3 <- donnees[donnees$cluster == 3, ]
+#cluster_hierarchique <- hclust(dist(donnees_cluster3[, 2:10]))
+
+# Sélection des variables quantitatives
+donnees_quant3 <- donnees_cluster3[, c(2:10)]
+# Centrer et réduire les données
+donnees_centrees3 <- scale(donnees_quant3, center = TRUE, scale = TRUE)
+
+
+par(mfrow = c(1,2)) 
+eucl3 <- dist(donnees_centrees3) ^ 2
+dend <- hclust(eucl3, method = "ward.D2")
+# Plot le dendrogramme avec les titres
+plot(dend, main = "Dendrogramme hiérarchique cluster 3",
+     sub = "Méthode de Ward", xlab = "Observations", ylab = "Distance")
+
+
+plot(rev(hclust(eucl3, method = "ward.D2")$height), type = 'b',
+     main = "Graphique de coupe du dendrogramme cluster 3",
+     xlab = "Nombre de groupes",
+     ylab = "Hauteur du saut")
+
+### Partie K means 
+
+pca3 <- prcomp(donnees_centrees3, scale. = TRUE)
+PC13 <-pca3$x[, 1]
+PC23 <- pca3$x[, 2]
+# K-means clustering avec 4 clusters
+set.seed(123)
+kmeans_clusters3 <- kmeans(pca3$x[, 1:2], centers = 7)
+table(kmeans_clusters3$cluster)
+
+# Ajouter les clusters aux données d'origine
+donnees_cluster3$new_cluster <- as.factor(kmeans_clusters3$cluster)
+
+
+# Créer un graphique en nuage de points coloré par cluster
+ggplot(donnees_cluster3, aes(x = PC13, y = PC23, color = new_cluster)) +
+  geom_point() +
+  labs(title = "ACP avec clustering K-means (7 clusters)",
+       x = "Première composante principale",
+       y = "Deuxième composante principale")+
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+# Comment répartir les 10 M?
+# Calcul des besoins moyens par cluster
+besoins_cluster3 <- aggregate(donnees_quant3, by = list(donnees_cluster3$new_cluster), FUN = mean)
+
+# Ajout de la colonne "besoins" pour chaque pays
+donnees_cluster3$besoins <- NA
+for (i in 1:nrow(donnees_cluster3)) {
+  donnees_cluster3[i, "besoins"] <- besoins_cluster3[as.character(donnees_cluster3[i, "new_cluster"]), 
+                                                     names(besoins_cluster3) %in% names(donnees_quant3)]
+}
+
+# Répartition des fonds
+donnees_cluster3$montant_alloue <- donnees_cluster3$besoins / sum(donnees_cluster3$besoins) * 10000000
+
+cat("Nombre de pays dans countries_sf : ", length(countries_sf$pays), "\n")
+cat("Nombre de pays dans donnees_cluster3 : ", length(donnees_cluster3$pays), "\n")
+
+pays_communs <- intersect(countries_sf$pays, donnees_cluster3$pays)
+
+cat("Nombre de pays en commun : ", length(pays_communs), "\n")
+
+couleurs_cluster <- c("#CCFFFF", "#FFCCCC", "#FFCC99", "#66CCCC", "#CCCCFF", "#FF99CC", "#99FFCC")
+
+# Tracé de la carte
+
+ggplot() +
+  geom_sf(data = countries_sf[countries_sf$pays %in% pays_communs,], 
+          aes(fill = as.factor(donnees_cluster3$new_cluster[donnees_cluster3$pays %in% pays_communs]))) +
+  scale_fill_manual(values = couleurs_cluster,
+                    na.value = "grey50",
+                    name = "Cluster") +
+  geom_sf_text(
+    data = countries_sf[countries_sf$pays %in% pays_communs,],
+    aes(label = paste(donnees_cluster3$pays[donnees_cluster3$pays %in% pays_communs])),
+    size = 2,
+    color = "black",
+    check_overlap = TRUE,
+    nudge_y = 0.5
+  ) +
+  labs(title = "Carte du monde de la répartition du budget (Cluster 3)") +
+  theme_minimal() + 
+  theme(plot.title = element_text(size = 20, hjust = 0.5)) +
+  coord_sf(xlim = c(-20, 120), ylim = c(-40, 40), expand = FALSE)
+
+table(donnees_cluster3$montant_alloue)
+table(donnees_cluster3$new_cluster)
