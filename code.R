@@ -161,29 +161,6 @@ for (i in seq_along(countries_polygons$montant_alloue)) {
 }
 
 
-# Dessiner la carte avec les couleurs de chaque pays
-plot(
-  countries_polygons["montant_alloue"],
-  main = "Carte du monde de la répartition du budget",
-  col = couleurs,
-  graticule = st_crs(4326)
-)
-
-
-legend(
-  "topright",
-  legend = formatC(classes$brks),
-  fill = palette_couleurs,
-  title = "Montant alloué",
-  title.col = "black",
-  cex = 0.6,
-  bty = "n",
-  horiz = FALSE,
-  box.lwd = 1,
-  box.col = "black",
-  bg = "white"
-)
-
 
 #Graphique avec un ggplot
 library(ggplot2)
@@ -304,5 +281,3 @@ ggplot() +
   theme(plot.title = element_text(size = 20, hjust = 0.5)) +
   coord_sf(xlim = c(-20, 120), ylim = c(-40, 40), expand = FALSE)
 
-table(donnees_cluster3$montant_alloue)
-table(donnees_cluster3$new_cluster)
