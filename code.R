@@ -286,14 +286,7 @@ pays_communs <- intersect(countries_sf$pays, donnees_cluster3$pays)
 
 cat("Nombre de pays en commun : ", length(pays_communs), "\n")
 
-couleurs_cluster <-
-  c("#CCFFFF",
-             "#FFCCCC",
-             "#FFCC99",
-             "#66CCCC",
-             "#CCCCFF",
-             "#FF99CC",
-             "#99FFCC")
+couleurs_cluster <- c("#F3E79BFF", "#FAC484FF", "#F8A07EFF", "#EB7F86FF", "#CE6693FF", "#A059A0FF", "#5C53A5FF")
              
 # Tracé de la carte
 
