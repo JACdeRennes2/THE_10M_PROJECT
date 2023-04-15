@@ -84,8 +84,9 @@ table(kmeans_clusters$cluster)
 donnees$cluster <- as.factor(kmeans_clusters$cluster)
 
 # Créer un graphique en nuage de points coloré par cluster
-ggplot(donnees, aes(x = PC1, y = PC2, color = cluster)) +
+ggplot(donnees, aes(x = PC1, y = PC2, group = cluster, color = factor(cluster))) +
   geom_point(size = 3) +
+  scale_colour_manual(values=c("#FFE0CC", "#FFC7B6", "#FFB5B8", "#F2B2CC", "#E5B5F7", "#B5CCE5", "#B5E5D6")) +
   labs(title = "ACP avec clustering K-means (7 clusters)",
        x = "Première composante principale",
        y = "Deuxième composante principale") +
