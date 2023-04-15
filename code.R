@@ -7,19 +7,15 @@ library("classInt")
 library(mclust)
 library(gridExtra)
 library(FactoMineR)
-# Importer les données à partir du fichier CSV
+library(ggplot2)
+
+# Importation du fichier CSV
 # Modification de l'encoding du fichier ANSI -> utf-8
-donnees <-
-  read.csv(
-    "data/Pays_donnees.csv",
-    header = TRUE,
-    sep = ",",
-    encoding = "UTF-8"
-  )
-# Supprimer les valeurs manquantes
+donnees <-read.csv("data/Pays_donnees.csv", header = TRUE, sep = ",", encoding = "UTF-8")
+# Supression des valeurs manquantes
 donnees <- na.omit(donnees)
 
-#représentation illustrative
+# Représentations illustratives
 
 # Création du graphique à boîtes
 
@@ -41,27 +37,22 @@ dev.off()
 # Sélection des variables quantitatives
 donnees_quant <- donnees[, c(2:10)]
 # Centrer et réduire les données
-donnees_centrees <-
-  scale(donnees_quant, center = TRUE, scale = TRUE)
-
+donnees_centrees <- scale(donnees_quant, center = TRUE, scale = TRUE)
 
 # Statistiques descriptives
 summary(donnees_centrees)
-# Graphiques
 pairs(donnees_centrees, main = "Matrice de corrélation")
 
-# Appliquer l'ACP
+# ACP
+PCA(donnees_centrees)
 pca <- prcomp(donnees_centrees, scale. = TRUE)
-acp = PCA(donnees_norm)
-PC1 <- pca$x[, 1]
-PC2 <- pca$x[, 2]
-# Visualiser le graphique des valeurs propres
 plot(pca)
-# Interpréter les composantes principales
 summary(pca)
 # Afficher les charges des variables sur les deux premiers axes
 print(pca$rotation[, 1:2])
 
+
+#CAH
 par(mfrow = c(1, 2))
 eucl <- dist(donnees_centrees) ^ 2
 dend <- hclust(eucl, method = "ward.D2")
@@ -74,7 +65,6 @@ plot(
   ylab = "Distance"
 )
 
-
 plot(
   rev(hclust(eucl, method = "ward.D2")$height),
   type = 'b',
@@ -83,23 +73,10 @@ plot(
   ylab = "Hauteur du saut"
 )
 
-
-model <- Mclust(donnees_centrees)
-plot(model, what = "BIC")
-
-# Get the number of clusters with the lowest BIC value
-best_cluster <- which.min(model$BIC)
-cat("The optimal number of clusters is:", best_cluster)
-
-
-
-# K-means clustering avec 4 clusters
+# K-means clustering avec 7 clusters
 set.seed(123)
-kmeans_clusters <- kmeans(pca$x[, 1:2], centers = 4)
+kmeans_clusters <- kmeans(pca$x[, 1:2], centers = 7)
 table(kmeans_clusters$cluster)
-
-# Ajouter les clusters aux données d'origine
-donnees$cluster <- as.factor(kmeans_clusters$cluster)
 
 # Ajouter les clusters aux données d'origine
 donnees$cluster <- as.factor(kmeans_clusters$cluster)
@@ -107,16 +84,16 @@ donnees$cluster <- as.factor(kmeans_clusters$cluster)
 # Créer un graphique en nuage de points coloré par cluster
 ggplot(donnees, aes(x = PC1, y = PC2, color = cluster)) +
   geom_point() +
-  labs(title = "ACP avec clustering K-means (4 clusters)",
+  labs(title = "ACP avec clustering K-means (7 clusters)",
        x = "Première composante principale",
        y = "Deuxième composante principale") +
   theme(plot.title = element_text(hjust = 0.5, face = "bold")) + theme_minimal()
 
+
 # Comment répartir les 10 M?
 
 # Calcul des besoins moyens par cluster
-besoins_cluster <-
-  aggregate(donnees[, 2:10], by = list(donnees$cluster), FUN = mean)
+besoins_cluster <- aggregate(donnees[, 2:10], by = list(donnees$cluster), FUN = mean)
 # Ajout de la colonne "besoins" pour chaque pays
 donnees$besoins <- NA
 for (i in 1:nrow(donnees)) {
@@ -124,8 +101,7 @@ for (i in 1:nrow(donnees)) {
     besoins_cluster[donnees[i, "cluster"], names(besoins_cluster) %in% names(donnees)[2:10]]
 }
 # Répartition des fonds
-donnees$montant_alloue <-
-  donnees$besoins / sum(donnees$besoins) * 10000000
+donnees$montant_alloue <- donnees$besoins / sum(donnees$besoins) * 10000000
 
 
 ################################################################################
@@ -149,14 +125,11 @@ montants <- donnees$montant_alloue[-c(39, 93, 139, 142, 148, 159)]
 countries_polygons$pays <- pays_carte
 countries_polygons$montant_alloue <- round(montants)
 
-
-
-
 plot(countries_polygons$geometry,
      main = "Repartition des dépenses")
 
 # Déterminer les classes
-nb_coupures <- 3
+nb_coupures <- 6
 classes <-
   classIntervals(donnees$montant_alloue, nb_coupures, style = "kmeans")
 
@@ -171,9 +144,7 @@ for (i in seq_along(countries_polygons$montant_alloue)) {
 }
 
 
-
 #Graphique avec un ggplot
-library(ggplot2)
 
 # Convertir la dataframe en sf
 countries_sf <- st_as_sf(countries_polygons)
