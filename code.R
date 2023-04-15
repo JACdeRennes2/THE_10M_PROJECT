@@ -125,6 +125,7 @@ montants <- donnees$montant_alloue[-c(39, 93, 139, 142, 148, 159)]
 countries_polygons$pays <- pays_carte
 countries_polygons$montant_alloue <- round(montants)
 
+
 plot(countries_polygons$geometry,
      main = "Repartition des dépenses")
 
@@ -166,7 +167,7 @@ ggplot() +
     color = "black",
     check_overlap = TRUE,
     nudge_y = 0.5
-  ) +
+  )+
   labs(title = "Carte du monde de la répartition du budget") +
   theme_minimal() +
   theme(plot.title = element_text(size = 20, hjust = 0.5))
@@ -259,14 +260,7 @@ pays_communs <- intersect(countries_sf$pays, donnees_cluster3$pays)
 
 cat("Nombre de pays en commun : ", length(pays_communs), "\n")
 
-couleurs_cluster <-
-  c("#CCFFFF",
-             "#FFCCCC",
-             "#FFCC99",
-             "#66CCCC",
-             "#CCCCFF",
-             "#FF99CC",
-             "#99FFCC")
+couleurs_cluster <- c("#F3E79BFF", "#FAC484FF", "#F8A07EFF", "#EB7F86FF", "#CE6693FF", "#A059A0FF", "#5C53A5FF")
              
 # Tracé de la carte
 
