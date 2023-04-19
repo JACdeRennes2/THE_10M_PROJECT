@@ -84,8 +84,9 @@ table(kmeans_clusters$cluster)
 donnees$cluster <- as.factor(kmeans_clusters$cluster)
 
 # Créer un graphique en nuage de points coloré par cluster
-ggplot(donnees, aes(x = PC1, y = PC2, color = cluster)) +
+ggplot(donnees, aes(x = PC1, y = PC2, group = cluster, color = factor(cluster))) +
   geom_point(size = 3) +
+  scale_colour_manual(values=c("#FFE0CC", "#FFC7B6", "#FFB5B8", "#F2B2CC", "#E5B5F7", "#B5CCE5", "#B5E5D6")) +
   labs(title = "ACP avec clustering K-means (7 clusters)",
        x = "Première composante principale",
        y = "Deuxième composante principale") +
@@ -104,6 +105,8 @@ for (i in 1:nrow(donnees)) {
 }
 # Répartition des fonds
 donnees$montant_alloue <- donnees$besoins / sum(donnees$besoins) * 10000000
+
+
 
 
 ################################################################################
@@ -127,9 +130,6 @@ countries_polygons$pays <- pays_carte
 countries_polygons$montant_alloue <- round(montants)
 
 
-plot(countries_polygons$geometry,
-     main = "Repartition des dépenses")
-
 # Déterminer les classes
 nb_coupures <- 6
 classes <-
@@ -151,8 +151,12 @@ for (i in seq_along(countries_polygons$montant_alloue)) {
 
 # Convertir la dataframe en sf
 countries_sf <- st_as_sf(countries_polygons)
-couleurs_cluster <- c("#F3E79BFF", "#FAC484FF", "#F8A07EFF", "#EB7F86FF", "#CE6693FF", "#A059A0FF", "#5C53A5FF")
+couleurs_cluster <- c("#FFE0CC", "#FFC7B6", "#FFB5B8", "#F2B2CC", "#E5B5F7", "#B5CCE5", "#B5E5D6")
 pays_communs <- intersect(countries_sf$pays, donnees$pays)
+
+################################################################################
+## Carte coloriée en fonction des clusters #####################################
+
 ggplot() +
   geom_sf(data = countries_sf[countries_sf$pays %in% pays_communs, ],
           aes(fill = as.factor(donnees$cluster[donnees$pays %in% pays_communs]))) +
@@ -170,116 +174,24 @@ ggplot() +
   labs(title = "Carte du monde de la répartition du budget") +
   theme_minimal() +
   theme(plot.title = element_text(size = 20, hjust = 0.5))
+
 ################################################################################
-################################################################################
-
-
-# Deuxième classification
-
-donnees_cluster3 <- donnees[donnees$cluster == 3,]
-#cluster_hierarchique <- hclust(dist(donnees_cluster3[, 2:10]))
-
-# Sélection des variables quantitatives
-donnees_quant3 <- donnees_cluster3[, c(2:10)]
-# Centrer et réduire les données
-donnees_centrees3 <-
-  scale(donnees_quant3, center = TRUE, scale = TRUE)
-
-
-par(mfrow = c(1, 2))
-eucl3 <- dist(donnees_centrees3) ^ 2
-dend <- hclust(eucl3, method = "ward.D2")
-# Plot le dendrogramme avec les titres
-plot(
-  dend,
-  main = "Dendrogramme hiérarchique cluster 3",
-  sub = "Méthode de Ward",
-  xlab = "Observations",
-  ylab = "Distance"
-)
-
-
-plot(
-  rev(hclust(eucl3, method = "ward.D2")$height),
-  type = 'b',
-  main = "Graphique de coupe du dendrogramme cluster 3",
-  xlab = "Nombre de groupes",
-  ylab = "Hauteur du saut"
-)
-
-### Partie K means
-
-pca3 <- prcomp(donnees_centrees3, scale. = TRUE)
-PC13 <- pca3$x[, 1]
-PC23 <- pca3$x[, 2]
-# K-means clustering avec 4 clusters
-set.seed(123)
-kmeans_clusters3 <- kmeans(pca3$x[, 1:2], centers = 7)
-table(kmeans_clusters3$cluster)
-
-# Ajouter les clusters aux données d'origine
-donnees_cluster3$new_cluster <- as.factor(kmeans_clusters3$cluster)
-
-
-# Créer un graphique en nuage de points coloré par cluster
-ggplot(donnees_cluster3, aes(x = PC13, y = PC23, color = new_cluster)) +
-  geom_point() +
-  labs(title = "ACP avec clustering K-means (7 clusters)",
-       x = "Première composante principale",
-       y = "Deuxième composante principale") +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-
-# Comment répartir les 10 M?
-# Calcul des besoins moyens par cluster
-besoins_cluster3 <-
-  aggregate(donnees_quant3,
-            by = list(donnees_cluster3$new_cluster),
-            FUN = mean)
-
-# Ajout de la colonne "besoins" pour chaque pays
-donnees_cluster3$besoins <- NA
-for (i in 1:nrow(donnees_cluster3)) {
-  donnees_cluster3[i, "besoins"] <-
-    besoins_cluster3[as.character(donnees_cluster3[i, "new_cluster"]),
-                     names(besoins_cluster3) %in% names(donnees_quant3)]
-}
-
-# Répartition des fonds
-donnees_cluster3$montant_alloue <-
-  donnees_cluster3$besoins / sum(donnees_cluster3$besoins) * 10000000
-
-cat("Nombre de pays dans countries_sf : ",
-    length(countries_sf$pays),
-    "\n")
-cat("Nombre de pays dans donnees_cluster3 : ",
-    length(donnees_cluster3$pays),
-    "\n")
-
-pays_communs <- intersect(countries_sf$pays, donnees_cluster3$pays)
-
-cat("Nombre de pays en commun : ", length(pays_communs), "\n")
-
-couleurs_cluster <- c("#F3E79BFF", "#FAC484FF", "#F8A07EFF", "#EB7F86FF", "#CE6693FF", "#A059A0FF", "#5C53A5FF")
-             
-# Tracé de la carte
+## Carte coloriée en fonction du montant alloué ################################
 
 ggplot() +
   geom_sf(data = countries_sf[countries_sf$pays %in% pays_communs, ],
-          aes(fill = as.factor(donnees_cluster3$new_cluster[donnees_cluster3$pays %in% pays_communs]))) +
-  scale_fill_manual(values = couleurs_cluster,
-                    na.value = "grey50",
-                    name = "Cluster") +
+          aes(fill = montant_alloue)) +
+  scale_fill_continuous(high="#BA2525", 
+                        low="#FFF7BD") +
   geom_sf_text(
     data = countries_sf[countries_sf$pays %in% pays_communs, ],
-    aes(label = paste(donnees_cluster3$pays[donnees_cluster3$pays %in% pays_communs])),
+    aes(label = paste(donnees$pays[donnees$pays %in% pays_communs])),
     size = 2,
     color = "black",
     check_overlap = TRUE,
     nudge_y = 0.5
   ) +
-  labs(title = "Carte du monde de la répartition du budget (Cluster 3)") +
+  labs(title = "Carte du monde de la répartition du budget") +
   theme_minimal() +
-  theme(plot.title = element_text(size = 20, hjust = 0.5)) +
-  coord_sf(xlim = c(-20, 120),
-           ylim = c(-40, 40),
-           expand = FALSE)
+  theme(plot.title = element_text(size = 20, hjust = 0.5))
+
